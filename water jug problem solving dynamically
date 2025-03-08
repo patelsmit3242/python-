@@ -1,0 +1,98 @@
+from collections import deque
+
+def is_goal_state(state, goal_jug, target):
+    return state[goal_jug] == target
+
+def get_possible_moves(state, capacities):
+    possible_moves = []
+    num_jugs = len(capacities)
+
+    for i in range(num_jugs):
+        new_state = list(state)
+
+        # Fill jug i
+        new_state[i] = capacities[i]
+        possible_moves.append(tuple(new_state))
+
+        # Empty jug i
+        new_state[i] = 0
+        possible_moves.append(tuple(new_state))
+
+        # Pour from jug i to jug j
+        for j in range(num_jugs):
+            if i != j:
+                new_state = list(state)
+                pour_amount = min(state[i], capacities[j] - state[j])
+                new_state[i] -= pour_amount
+                new_state[j] += pour_amount
+                possible_moves.append(tuple(new_state))
+
+    return possible_moves
+
+def water_jug_bfs(capacities, goal_jug, target):
+    start = tuple([0] * len(capacities))
+    queue = deque([(start, [start])])
+    visited = set()
+
+    while queue:
+        current_state, path = queue.popleft()
+
+        if is_goal_state(current_state, goal_jug, target):
+            return path
+
+        if current_state in visited:
+            continue
+        visited.add(current_state)
+
+        for move in get_possible_moves(current_state, capacities):
+            if move not in visited:
+                queue.append((move, path + [move]))
+
+    return None  # No solution found
+
+def water_jug_dfs(capacities, goal_jug, target):
+    start = tuple([0] * len(capacities))
+    stack = [(start, [start])]
+    visited = set()
+
+    while stack:
+        current_state, path = stack.pop()
+
+        if is_goal_state(current_state, goal_jug, target):
+            return path
+
+        if current_state in visited:
+            continue
+        visited.add(current_state)
+
+        for move in get_possible_moves(current_state, capacities):
+            if move not in visited:
+                stack.append((move, path + [move]))
+
+    return None  # No solution found
+
+# User input
+num_jugs = int(input("Enter number of jugs: "))
+capacities = []
+for i in range(num_jugs):
+    capacity = int(input(f"Enter capacity of Jug {i + 1}: "))
+    capacities.append(capacity)
+
+goal_jug = int(input("Enter the jug number (1-based index) in which you want to measure the target: ")) - 1
+target_amount = int(input("Enter target amount: "))
+
+print("\nBFS Solution:")
+bfs_solution = water_jug_bfs(capacities, goal_jug, target_amount)
+if bfs_solution:
+    for step in bfs_solution:
+        print(step)
+else:
+    print("No solution found.")
+
+print("\nDFS Solution:")
+dfs_solution = water_jug_dfs(capacities, goal_jug, target_amount)
+if dfs_solution:
+    for step in dfs_solution:
+        print(step)
+else:
+    print("No solution found.")

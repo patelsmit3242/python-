@@ -1,0 +1,114 @@
+import heapq
+import time
+
+class Graph:
+    def __init__(self):
+        self.edges = {}
+        self.heuristics = {}
+
+    def add_edge(self, from_node, to_node, cost):
+        if from_node not in self.edges:
+            self.edges[from_node] = []
+        self.edges[from_node].append((to_node, cost))
+
+    def set_heuristic(self, node, heuristic):
+        self.heuristics[node] = heuristic
+
+# A* Algorithm
+def a_star(graph, start, goal):
+    open_list = []
+    heapq.heappush(open_list, (0, start))  # (f_cost, node)
+    came_from = {}
+    # Include all nodes from both edges and heuristics
+    g_score = {node: float('inf') for node in list(graph.edges.keys()) + list(graph.heuristics.keys())}
+    g_score[start] = 0
+
+    while open_list:
+        current_f, current_node = heapq.heappop(open_list)
+
+        if current_node == goal:
+            path = []
+            while current_node:
+                path.append(current_node)
+                current_node = came_from.get(current_node)
+            return path[::-1], g_score[goal]
+
+        for neighbor, cost in graph.edges.get(current_node, []):
+            tentative_g_score = g_score[current_node] + cost
+
+            if tentative_g_score < g_score[neighbor]:
+                came_from[neighbor] = current_node
+                g_score[neighbor] = tentative_g_score
+                f_score = tentative_g_score + graph.heuristics[neighbor]  # Now heuristics should be defined for all nodes
+                heapq.heappush(open_list, (f_score, neighbor))
+
+    return None, float('inf')
+
+# AO* Algorithm
+def ao_star(graph, node, goal, memo):
+    if node in memo:
+        return memo[node]
+
+    if node not in graph.edges or not graph.edges[node]:
+        if node == goal:
+            return 0, [node]
+        return float('inf'), []
+
+    best_cost = float('inf')
+    best_path = []
+
+    for neighbor, cost in graph.edges[node]:
+        child_cost, child_path = ao_star(graph, neighbor, goal, memo)
+        total_cost = cost + child_cost
+        if total_cost < best_cost:
+            best_cost = total_cost
+            best_path = [node] + child_path
+
+    memo[node] = (best_cost, best_path)
+    return best_cost, best_path
+
+# Initialize the graph
+graph = Graph()
+
+# Add edges for the problem
+graph.add_edge("S", "A", 2)
+graph.add_edge("S", "B", 1)
+graph.add_edge("A", "C", 0)
+graph.add_edge("A", "D", 3)
+graph.add_edge("B", "E", 0)
+graph.add_edge("C", "F", 3)
+graph.add_edge("D", "F", 1)
+graph.add_edge("E", "T", 0)
+graph.add_edge("F", "T", 8)
+
+# Set heuristics
+graph.set_heuristic("S", 1)
+graph.set_heuristic("A", 1)
+graph.set_heuristic("B", 1)
+graph.set_heuristic("C", 1)
+graph.set_heuristic("D", 1)
+graph.set_heuristic("E", 1)
+graph.set_heuristic("F", 1)
+graph.set_heuristic("T", 1)
+
+
+start_time = time.time()
+print("A* Algorithm Solution:")
+path, cost = a_star(graph, "S", "T")
+end_time = time.time()
+a_star_execution_time = end_time - start_time
+print(f"Path: {path}, Cost: {cost}")
+print(f"Execution Time: {a_star_execution_time:.6f} seconds")
+
+# Solve with AO*
+start_time = time.time()
+print("\nAO* Algorithm Solution:")
+memo = {}
+best_cost, best_path = ao_star(graph, "S", "T", memo)
+end_time = time.time()
+ao_star_execution_time = end_time - start_time
+print(f"Path: {best_path}, Cost: {best_cost}")
+print(f"Execution Time: {ao_star_execution_time:.6f} seconds")
+
+#ENTER YOUR REVERSE ENROLLMENT NUMBER IN edges and Set heuristics
+
